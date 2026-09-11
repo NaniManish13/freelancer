@@ -1,0 +1,6 @@
+{
+  "name": "FreelanceFlow",
+  "description": "A SaaS project-management, time-tracking, and invoicing platform for freelancers with multi-tenancy, persistent timer, and financial analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
