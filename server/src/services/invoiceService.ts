@@ -144,11 +144,23 @@ export class InvoiceService {
     // Add any custom items if provided
     if (data.customItems && data.customItems.length > 0) {
       for (const customItem of data.customItems) {
+        if (!customItem.description || customItem.description.trim().length === 0) {
+          throw new AppError('Custom item description is required.', 400);
+        }
+        if (customItem.description.length > 300) {
+          throw new AppError('Custom item description must not exceed 300 characters.', 400);
+        }
         const qty = Number(customItem.quantity) || 1;
+        if (isNaN(qty) || qty <= 0 || qty > 100000) {
+          throw new AppError('Custom item quantity must be a positive number up to 100,000.', 400);
+        }
         const rate = Number(customItem.rate) || 0;
+        if (isNaN(rate) || rate < 0 || rate > 1000000) {
+          throw new AppError('Custom item rate must be a non-negative number up to 1,000,000.', 400);
+        }
         const amount = Number((qty * rate).toFixed(2));
         itemsToCreate.push({
-          description: customItem.description,
+          description: customItem.description.trim(),
           quantity: qty,
           rate,
           amount,

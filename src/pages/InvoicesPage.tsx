@@ -8,7 +8,7 @@ import { useToast } from '../context/ToastContext';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { UpgradeModal } from '../components/ui/UpgradeModal';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { ErrorMessage } from '../components/ui/ErrorMessage';
+import { StatusAlert } from '../components/ui/StatusAlert';
 import {
   FileText,
   Plus,
@@ -229,7 +229,7 @@ export const InvoicesPage: React.FC = () => {
         {loading ? (
           <LoadingSpinner label="Loading invoices..." />
         ) : errorMessage ? (
-          <ErrorMessage message={errorMessage} onRetry={fetchInvoices} />
+          <StatusAlert message={errorMessage} onRetry={fetchInvoices} />
         ) : invoices.length === 0 ? (
           <div className="p-12 text-center text-xs text-slate-400 space-y-4">
             <FileText className="w-10 h-10 text-slate-300 mx-auto" />

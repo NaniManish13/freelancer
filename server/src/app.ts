@@ -30,12 +30,44 @@ export function createApp() {
   );
 
   // CORS configuration
-  const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+  const isProduction = process.env.NODE_ENV === 'production';
+  const clientUrlEnv = process.env.CLIENT_URL;
+
+  // Normalize allowed origins from CLIENT_URL (supports comma-separated values)
+  const allowedOrigins: string[] = [];
+  if (clientUrlEnv) {
+    clientUrlEnv.split(',').forEach((url) => {
+      const normalized = url.trim().replace(/\/+$/, '');
+      if (normalized) {
+        allowedOrigins.push(normalized);
+      }
+    });
+  }
+
   app.use(
     cors({
       origin: (origin, callback) => {
-        // Allow same-origin, preview urls, localhost, or non-browser requests
-        callback(null, true);
+        // Allow requests with no origin (e.g. mobile apps, curl, server-to-server, or same-origin)
+        if (!origin) {
+          return callback(null, true);
+        }
+
+        if (isProduction) {
+          if (allowedOrigins.length === 0) {
+            // Missing CLIENT_URL in production: reject cross-origin requests securely
+            return callback(new Error('CORS policy: CLIENT_URL is not configured on the server.'));
+          }
+
+          const normalizedOrigin = origin.replace(/\/+$/, '');
+          if (allowedOrigins.includes(normalizedOrigin)) {
+            return callback(null, true);
+          }
+
+          return callback(new Error(`CORS policy: Request from origin ${origin} has been blocked.`));
+        }
+
+        // In development mode: allow local dev / preview origins
+        return callback(null, true);
       },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -43,9 +75,14 @@ export function createApp() {
     })
   );
 
-  // Logging in dev
+  // Favicon handler to eliminate 404 console errors in browser
+  app.get('/favicon.ico', (_req, res) => {
+    res.status(204).end();
+  });
+
+  // Logging in dev (only for API routes to avoid logging Vite frontend assets)
   if (process.env.NODE_ENV !== 'production') {
-    app.use(morgan('dev'));
+    app.use('/api', morgan('dev'));
   }
 
   // Rate Limiting (1000 requests per 15 minutes in sandbox/dev to ensure fluid UX while securing endpoints)

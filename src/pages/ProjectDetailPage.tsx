@@ -10,7 +10,7 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { Modal } from '../components/ui/Modal';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { ErrorMessage } from '../components/ui/ErrorMessage';
+import { StatusAlert } from '../components/ui/StatusAlert';
 import { ProjectProgressBar } from '../components/projects/ProjectProgressBar';
 import {
   FolderKanban,
@@ -220,7 +220,7 @@ export const ProjectDetailPage: React.FC = () => {
   }
 
   if (errorMessage || !projectData) {
-    return <ErrorMessage message={errorMessage || 'Project not found'} onRetry={fetchProject} />;
+    return <StatusAlert message={errorMessage || 'Project not found'} onRetry={fetchProject} />;
   }
 
   const client = typeof projectData.client === 'object' ? projectData.client : null;

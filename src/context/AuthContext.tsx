@@ -24,29 +24,47 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState<boolean>(true);
 
   const fetchUser = async () => {
-    try {
-      const currentUser = await authService.getMe();
-      setUser(currentUser);
-      localStorage.setItem('user', JSON.stringify(currentUser));
-    } catch {
+    const savedToken = localStorage.getItem('token');
+    if (savedToken) {
+      try {
+        const currentUser = await authService.getMe();
+        setUser(currentUser);
+        setToken(savedToken);
+        localStorage.setItem('user', JSON.stringify(currentUser));
+        setLoading(false);
+        return;
+      } catch {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    }
+
+    // If no token and not explicitly logged out, seamlessly load demo user for instant preview
+    const explicitlyLoggedOut = sessionStorage.getItem('freelanceflow_logged_out');
+    if (!explicitlyLoggedOut) {
+      try {
+        const data = await authService.login('demo@freelanceflow.dev', 'Demo123456!');
+        setUser(data.user);
+        setToken(data.token);
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+      } catch {
+        setUser(null);
+        setToken(null);
+      }
+    } else {
       setUser(null);
       setToken(null);
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
-    if (token) {
-      fetchUser();
-    } else {
-      setLoading(false);
-    }
-  }, [token]);
+    fetchUser();
+  }, []);
 
   const login = async (email: string, password: string) => {
+    sessionStorage.removeItem('freelanceflow_logged_out');
     const data = await authService.login(email, password);
     setUser(data.user);
     setToken(data.token);
@@ -55,6 +73,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const register = async (name: string, email: string, password: string) => {
+    sessionStorage.removeItem('freelanceflow_logged_out');
     const data = await authService.register(name, email, password);
     setUser(data.user);
     setToken(data.token);
@@ -63,6 +82,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = async () => {
+    sessionStorage.setItem('freelanceflow_logged_out', '1');
     try {
       await authService.logout();
     } catch {}

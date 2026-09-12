@@ -8,6 +8,19 @@ import { seedDatabase } from './server/src/utils/seed.js';
 
 dotenv.config();
 
+// Enforce mandatory JWT_SECRET in production mode
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.trim() === '') {
+    console.error('FATAL ERROR: JWT_SECRET environment variable is mandatory in production mode. Server startup aborted.');
+    process.exit(1);
+  }
+} else {
+  // In development/test environments, ensure a fallback secret if none provided in .env
+  if (!process.env.JWT_SECRET) {
+    process.env.JWT_SECRET = 'freelanceflow_local_dev_secret_key';
+  }
+}
+
 const PORT = Number(process.env.PORT || 3000);
 
 async function startServer() {

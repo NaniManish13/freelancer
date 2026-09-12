@@ -7,7 +7,7 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { Modal } from '../components/ui/Modal';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { ErrorMessage } from '../components/ui/ErrorMessage';
+import { StatusAlert } from '../components/ui/StatusAlert';
 import { ProjectProgressBar } from '../components/projects/ProjectProgressBar';
 import {
   Users,
@@ -115,7 +115,7 @@ export const ClientDetailPage: React.FC = () => {
   }
 
   if (errorMessage || !clientData) {
-    return <ErrorMessage message={errorMessage || 'Client not found'} onRetry={fetchClient} />;
+    return <StatusAlert message={errorMessage || 'Client not found'} onRetry={fetchClient} />;
   }
 
   const projects = clientData.projects || [];

@@ -5,7 +5,7 @@ import { DashboardData } from '../types';
 import { DashboardCard } from '../components/ui/DashboardCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { ErrorMessage } from '../components/ui/ErrorMessage';
+import { StatusAlert } from '../components/ui/StatusAlert';
 import { ProjectProgressBar } from '../components/projects/ProjectProgressBar';
 import { TimerWidget } from '../components/timer/TimerWidget';
 import {
@@ -65,7 +65,7 @@ export const DashboardPage: React.FC = () => {
   }
 
   if (error || !data) {
-    return <ErrorMessage message={error || 'Failed to load dashboard'} onRetry={fetchDashboard} />;
+    return <StatusAlert message={error || 'Failed to load dashboard'} onRetry={fetchDashboard} />;
   }
 
   const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];

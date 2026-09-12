@@ -73,4 +73,25 @@ export const invoiceValidator = [
     .optional()
     .isFloat({ min: 0, max: 100 })
     .withMessage('Tax percentage must be between 0 and 100'),
+  body('customItems')
+    .optional()
+    .isArray()
+    .withMessage('Custom items must be an array'),
+  body('customItems.*.description')
+    .trim()
+    .notEmpty()
+    .withMessage('Custom item description is required')
+    .isLength({ max: 300 })
+    .withMessage('Custom item description must not exceed 300 characters'),
+  body('customItems.*.quantity')
+    .optional()
+    .isFloat({ min: 0.01, max: 100000 })
+    .withMessage('Custom item quantity must be a positive number up to 100,000'),
+  body('customItems.*.rate')
+    .isFloat({ min: 0, max: 1000000 })
+    .withMessage('Custom item rate must be a non-negative number up to 1,000,000'),
+  body('notes')
+    .optional()
+    .isLength({ max: 2000 })
+    .withMessage('Notes must not exceed 2000 characters'),
 ];

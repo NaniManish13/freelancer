@@ -6,7 +6,11 @@ import { ProjectService } from '../services/projectService';
 import { TaskService } from '../services/taskService';
 import { TimeLogService } from '../services/timeLogService';
 import { InvoiceService } from '../services/invoiceService';
+import { PdfService } from '../services/pdfService';
 import { SampleDataService } from '../services/sampleDataService';
+
+// Ensure test JWT_SECRET is set
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_key_freelanceflow_testing';
 import { User } from '../models/User';
 import { Client } from '../models/Client';
 import { Project } from '../models/Project';
@@ -226,6 +230,88 @@ async function runTests() {
 
     const userBClients = await ClientService.getClients(userBId);
     assert(userBClients.length >= 2, 'User B now has populated clients and projects');
+
+    // 9. Custom Invoice Item Validation & Invoicing
+    console.log('\n--- 9. CUSTOM INVOICE ITEM VALIDATION ---');
+    // Valid custom item
+    const customInvoice = await InvoiceService.createInvoice(
+      {
+        clientId: client1._id.toString(),
+        dueDate: new Date(Date.now() + 7 * 86400000),
+        taxPercent: 5,
+        customItems: [
+          { description: 'Website Redesign Architecture Deliverable', quantity: 2, rate: 500 },
+          { description: 'Security Hardening Review', quantity: 1, rate: 250 },
+        ],
+      },
+      userAId
+    );
+    assert(Boolean(customInvoice._id), 'Created invoice with valid custom items');
+    assert(customInvoice.subtotal === 1250, 'Custom invoice subtotal is $1,250 (2*500 + 1*250)');
+    assert(customInvoice.tax === 62.5, 'Custom invoice tax is 5% ($62.50)');
+    assert(customInvoice.total === 1312.5, 'Custom invoice total is $1,312.50');
+
+    // Reject oversized description (>300 chars)
+    let rejectedOversizedDesc = false;
+    try {
+      await InvoiceService.createInvoice(
+        {
+          clientId: client1._id.toString(),
+          dueDate: new Date(Date.now() + 7 * 86400000),
+          customItems: [
+            { description: 'A'.repeat(305), quantity: 1, rate: 100 },
+          ],
+        },
+        userAId
+      );
+    } catch (err: any) {
+      rejectedOversizedDesc = err.message.includes('300 characters');
+    }
+    assert(rejectedOversizedDesc, 'Rejected custom item with description exceeding 300 characters');
+
+    // Reject invalid numeric rate/quantity
+    let rejectedInvalidRate = false;
+    try {
+      await InvoiceService.createInvoice(
+        {
+          clientId: client1._id.toString(),
+          dueDate: new Date(Date.now() + 7 * 86400000),
+          customItems: [
+            { description: 'Invalid Rate Item', quantity: 1, rate: -50 },
+          ],
+        },
+        userAId
+      );
+    } catch (err: any) {
+      rejectedInvalidRate = err.message.includes('non-negative');
+    }
+    assert(rejectedInvalidRate, 'Rejected custom item with negative rate');
+
+    // 10. PDF Generation & Pro Plan Gating
+    console.log('\n--- 10. PDF GENERATION & PRO PLAN ENFORCEMENT ---');
+    // Test that FREE plan is gated from generating PDF
+    let freePlanPdfBlocked = false;
+    try {
+      await PdfService.generateInvoicePdf(customInvoice._id.toString(), userAId, 'FREE');
+    } catch (err: any) {
+      freePlanPdfBlocked = err.message.includes('Pro plan');
+    }
+    assert(freePlanPdfBlocked, 'Free tier is blocked from Puppeteer PDF generation with 403');
+
+    // Test that HTML generation works for any tier
+    const htmlOutput = await PdfService.generateInvoiceHtml(customInvoice._id.toString(), userAId);
+    assert(
+      htmlOutput.includes(customInvoice.invoiceNumber) && htmlOutput.includes('Website Redesign Architecture Deliverable'),
+      'HTML template renderer generates correct invoice structure and line items'
+    );
+
+    // 11. Security & Configuration Checks
+    console.log('\n--- 11. SECURITY & CONFIGURATION VERIFICATION ---');
+    assert(process.env.JWT_SECRET !== undefined && process.env.JWT_SECRET.length > 0, 'JWT_SECRET is configured for test runtime');
+
+    // Verify token signing & verification with dynamic secret
+    const testToken = AuthService.generateToken(userAId);
+    assert(typeof testToken === 'string' && testToken.split('.').length === 3, 'AuthService signs valid 3-part JWT token using dynamic secret');
 
     console.log('\n=============================================');
     console.log(`  TEST RESULTS: ${passed} PASSED, ${failed} FAILED`);

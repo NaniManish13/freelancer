@@ -29,7 +29,15 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       return;
     }
 
-    const secret = process.env.JWT_SECRET || 'freelanceflow_super_secret_jwt_key_2026_production_grade';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      res.status(500).json({
+        success: false,
+        message: 'Authentication service configuration error.',
+      });
+      return;
+    }
+
     const decoded = jwt.verify(token, secret) as { id: string };
 
     const user = await User.findById(decoded.id).select('-passwordHash');

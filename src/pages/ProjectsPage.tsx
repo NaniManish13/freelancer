@@ -7,7 +7,7 @@ import { useToast } from '../context/ToastContext';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { Modal } from '../components/ui/Modal';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { ErrorMessage } from '../components/ui/ErrorMessage';
+import { StatusAlert } from '../components/ui/StatusAlert';
 import { ProjectProgressBar } from '../components/projects/ProjectProgressBar';
 import {
   FolderKanban,
@@ -207,7 +207,7 @@ export const ProjectsPage: React.FC = () => {
       {loading ? (
         <LoadingSpinner label="Loading projects..." />
       ) : errorMessage ? (
-        <ErrorMessage message={errorMessage} onRetry={fetchProjects} />
+        <StatusAlert message={errorMessage} onRetry={fetchProjects} />
       ) : projects.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center space-y-4">
           <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">

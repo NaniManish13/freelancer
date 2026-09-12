@@ -8,7 +8,7 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { UpgradeModal } from '../components/ui/UpgradeModal';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { ErrorMessage } from '../components/ui/ErrorMessage';
+import { StatusAlert } from '../components/ui/StatusAlert';
 import {
   FileText,
   ArrowLeft,
@@ -114,7 +114,7 @@ export const InvoiceDetailPage: React.FC = () => {
   }
 
   if (errorMessage || !invoice) {
-    return <ErrorMessage message={errorMessage || 'Invoice not found'} onRetry={fetchInvoice} />;
+    return <StatusAlert message={errorMessage || 'Invoice not found'} onRetry={fetchInvoice} />;
   }
 
   const client = typeof invoice.client === 'object' ? invoice.client : null;

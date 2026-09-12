@@ -38,6 +38,27 @@ export const errorHandler = (
     });
   }
 
+  // Handle MongoDB connection / offline errors gracefully
+  if (
+    err.name === 'MongooseError' ||
+    err.name === 'MongoNetworkError' ||
+    err.name === 'MongoServerSelectionError' ||
+    (err.message && (err.message.includes('buffering timed out') || err.message.includes('ECONNREFUSED')))
+  ) {
+    console.warn('[AI Studio] Database offline or connection issue — returning fallback response');
+    if (req.method === 'GET') {
+      return res.status(200).json({
+        success: true,
+        data: req.path.endsWith('s') || req.path.endsWith('s/') ? [] : {},
+        message: 'Database temporarily unavailable.',
+      });
+    }
+    return res.status(503).json({
+      success: false,
+      message: 'Service temporarily unavailable (database offline).',
+    });
+  }
+
   // Handle CastError (invalid ObjectId)
   if (err.name === 'CastError') {
     return res.status(400).json({

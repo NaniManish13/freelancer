@@ -1,20 +1,20 @@
 import React from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
-interface ErrorMessageProps {
+export interface StatusAlertProps {
   title?: string;
   message: string;
   onRetry?: () => void;
 }
 
-export const ErrorMessage: React.FC<ErrorMessageProps> = ({
+export const StatusAlert: React.FC<StatusAlertProps> = ({
   title = 'Something went wrong',
   message,
   onRetry,
 }) => {
   return (
     <div
-      id="error-message-box"
+      id="status-alert-box"
       className="rounded-2xl border border-rose-200 bg-rose-50/70 p-6 text-rose-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
     >
       <div className="flex items-start gap-3">
@@ -26,7 +26,7 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
       </div>
       {onRetry && (
         <button
-          id="btn-error-retry"
+          id="btn-alert-retry"
           onClick={onRetry}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition-colors shrink-0"
         >

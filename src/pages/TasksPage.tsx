@@ -8,7 +8,7 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { Modal } from '../components/ui/Modal';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { ErrorMessage } from '../components/ui/ErrorMessage';
+import { StatusAlert } from '../components/ui/StatusAlert';
 import {
   CheckSquare,
   Plus,
@@ -370,7 +370,7 @@ export const TasksPage: React.FC = () => {
       {loading ? (
         <LoadingSpinner label="Loading tasks..." />
       ) : errorMessage ? (
-        <ErrorMessage message={errorMessage} onRetry={fetchTasks} />
+        <StatusAlert message={errorMessage} onRetry={fetchTasks} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Column 1: TODO */}

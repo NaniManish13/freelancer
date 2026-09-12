@@ -7,7 +7,7 @@ import { useToast } from '../context/ToastContext';
 import { Modal } from '../components/ui/Modal';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { ErrorMessage } from '../components/ui/ErrorMessage';
+import { StatusAlert } from '../components/ui/StatusAlert';
 import {
   FileSpreadsheet,
   Plus,
@@ -314,7 +314,7 @@ export const TimeLogsPage: React.FC = () => {
         {loading ? (
           <LoadingSpinner label="Loading time logs..." />
         ) : errorMessage ? (
-          <ErrorMessage message={errorMessage} onRetry={fetchTimeLogs} />
+          <StatusAlert message={errorMessage} onRetry={fetchTimeLogs} />
         ) : timeLogs.length === 0 ? (
           <div className="p-12 text-center text-xs text-slate-400 space-y-3">
             <FileSpreadsheet className="w-8 h-8 text-slate-300 mx-auto" />

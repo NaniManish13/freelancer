@@ -3,12 +3,18 @@ import jwt from 'jsonwebtoken';
 import { User, IUser } from '../models/User.js';
 import { AppError } from '../middleware/errorHandler.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'freelanceflow_super_secret_jwt_key_2026_production_grade';
+const getJwtSecret = (): string => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new AppError('Server authentication configuration error: JWT_SECRET is not configured.', 500);
+  }
+  return secret;
+};
 const JWT_EXPIRES_IN = '7d';
 
 export class AuthService {
   static generateToken(userId: string): string {
-    return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    return jwt.sign({ id: userId }, getJwtSecret(), { expiresIn: JWT_EXPIRES_IN });
   }
 
   static async register(name: string, email: string, password: string): Promise<{ user: Partial<IUser>; token: string }> {
