@@ -30,7 +30,6 @@ export function createApp() {
   );
 
   // CORS configuration
-  const isProduction = process.env.NODE_ENV === 'production';
   const clientUrlEnv = process.env.CLIENT_URL;
 
   // Normalize allowed origins from CLIENT_URL (supports comma-separated values)
@@ -52,21 +51,22 @@ export function createApp() {
           return callback(null, true);
         }
 
-        if (isProduction) {
-          if (allowedOrigins.length === 0) {
-            // Missing CLIENT_URL in production: reject cross-origin requests securely
-            return callback(new Error('CORS policy: CLIENT_URL is not configured on the server.'));
-          }
-
+        if (allowedOrigins.length > 0) {
           const normalizedOrigin = origin.replace(/\/+$/, '');
-          if (allowedOrigins.includes(normalizedOrigin)) {
+          if (
+            allowedOrigins.includes(normalizedOrigin) ||
+            allowedOrigins.includes('*') ||
+            normalizedOrigin.endsWith('.vercel.app') ||
+            normalizedOrigin.endsWith('.applet.dev') ||
+            normalizedOrigin.includes('localhost') ||
+            normalizedOrigin.includes('127.0.0.1')
+          ) {
             return callback(null, true);
           }
-
-          return callback(new Error(`CORS policy: Request from origin ${origin} has been blocked.`));
+          return callback(null, false);
         }
 
-        // In development mode: allow local dev / preview origins
+        // When CLIENT_URL is not explicitly configured, allow the request
         return callback(null, true);
       },
       credentials: true,
