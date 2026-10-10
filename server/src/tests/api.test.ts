@@ -1,4 +1,5 @@
 import { connectDB, disconnectDB } from '../config/db';
+import { configureJwtSecret } from '../config/security';
 import mongoose from 'mongoose';
 import { AuthService } from '../services/authService';
 import { ClientService } from '../services/clientService';
@@ -11,6 +12,7 @@ import { SampleDataService } from '../services/sampleDataService';
 
 // Ensure test JWT_SECRET is set
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_key_freelanceflow_testing';
+process.env.ALLOW_DEMO_AUTH = process.env.ALLOW_DEMO_AUTH || 'true';
 import { User } from '../models/User';
 import { Client } from '../models/Client';
 import { Project } from '../models/Project';
@@ -38,6 +40,44 @@ async function runTests() {
 
   try {
     await connectDB();
+
+    // 0. Security: Production secret enforcement and demo auth rules
+    console.log('\n--- 0. SECURITY CONFIGURATION ---');
+    const originalNodeEnv = process.env.NODE_ENV;
+    const originalJwtSecret = process.env.JWT_SECRET;
+    const originalAllowDemoAuth = process.env.ALLOW_DEMO_AUTH;
+
+    process.env.NODE_ENV = 'production';
+    delete process.env.JWT_SECRET;
+    delete process.env.ALLOW_DEMO_AUTH;
+
+    let productionSecretRejected = false;
+    try {
+      configureJwtSecret();
+    } catch {
+      productionSecretRejected = true;
+    }
+    assert(productionSecretRejected, 'Production startup refuses to continue when JWT_SECRET is missing');
+
+    process.env.NODE_ENV = originalNodeEnv || 'development';
+    process.env.JWT_SECRET = originalJwtSecret || 'test_jwt_secret_key_freelanceflow_testing';
+    process.env.ALLOW_DEMO_AUTH = originalAllowDemoAuth || 'true';
+
+    const demoEmail = 'demo@freelanceflow.dev';
+    const demoPassword = 'Demo123456!';
+
+    process.env.NODE_ENV = 'production';
+    process.env.ALLOW_DEMO_AUTH = 'false';
+    let demoBlockedInProduction = false;
+    try {
+      await AuthService.login(demoEmail, demoPassword);
+    } catch (err: any) {
+      demoBlockedInProduction = err.message.includes('disabled in production');
+    }
+    assert(demoBlockedInProduction, 'Demo login is disabled in production by default');
+
+    process.env.NODE_ENV = originalNodeEnv || 'development';
+    process.env.ALLOW_DEMO_AUTH = originalAllowDemoAuth || 'true';
 
     // 1. Auth Service: Registration & Hashing
     console.log('\n--- 1. AUTHENTICATION & SECURITY ---');
