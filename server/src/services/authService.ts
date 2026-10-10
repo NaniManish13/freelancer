@@ -2,14 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User, IUser } from '../models/User.js';
 import { AppError } from '../middleware/errorHandler.js';
-
-const getJwtSecret = (): string => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new AppError('Server authentication configuration error: JWT_SECRET is not configured.', 500);
-  }
-  return secret;
-};
+import { getJwtSecret, isProductionEnvironment } from '../config/security.js';
 const JWT_EXPIRES_IN = '7d';
 
 export class AuthService {
@@ -52,8 +45,14 @@ export class AuthService {
     const cleanEmail = email.trim().toLowerCase();
     let user = await User.findOne({ email: cleanEmail });
 
-    // Ensure demo account works reliably in dev / in-memory Mongo environments
-    if (!user && cleanEmail === 'demo@freelanceflow.dev' && (password === 'Demo123456!' || password === 'demo123456')) {
+    const allowDemoAuth = process.env.ALLOW_DEMO_AUTH === 'true';
+    const isProduction = isProductionEnvironment();
+
+    if (cleanEmail === 'demo@freelanceflow.dev' && isProduction && !allowDemoAuth) {
+      throw new AppError('Demo authentication is disabled in production.', 403);
+    }
+
+    if (!user && cleanEmail === 'demo@freelanceflow.dev' && !isProduction && allowDemoAuth && (password === 'Demo123456!' || password === 'demo123456')) {
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash('Demo123456!', salt);
       user = await User.create({
@@ -75,9 +74,8 @@ export class AuthService {
     }
 
     let isMatch = await bcrypt.compare(password, user.passwordHash);
-    
-    // Support demo account password fallback in sandbox if user changed casing
-    if (!isMatch && cleanEmail === 'demo@freelanceflow.dev' && (password === 'Demo123456!' || password === 'demo123456')) {
+
+    if (!isMatch && cleanEmail === 'demo@freelanceflow.dev' && !isProduction && allowDemoAuth && (password === 'Demo123456!' || password === 'demo123456')) {
       const salt = await bcrypt.genSalt(10);
       user.passwordHash = await bcrypt.hash('Demo123456!', salt);
       await user.save();

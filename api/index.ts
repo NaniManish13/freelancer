@@ -1,14 +1,11 @@
 import dotenv from 'dotenv';
 import { createApp } from '../server/src/app.js';
 import { connectDB } from '../server/src/config/db.js';
+import { configureJwtSecret } from '../server/src/config/security.js';
 
 dotenv.config();
 
-// Ensure JWT_SECRET fallback
-if (!process.env.JWT_SECRET || process.env.JWT_SECRET.trim() === '') {
-  console.warn('[FreelanceFlow] Notice: JWT_SECRET environment variable is not configured. Utilizing default secret.');
-  process.env.JWT_SECRET = 'freelanceflow_secure_default_jwt_secret_key_2026';
-}
+configureJwtSecret();
 
 let appInstance: any = null;
 
